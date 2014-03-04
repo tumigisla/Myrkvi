@@ -1,0 +1,4 @@
+#!/bin/bash
+
+java -jar JFlex.jar myrkvi.jflex
+javac myrkvi.java

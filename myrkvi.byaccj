@@ -1,0 +1,58 @@
+/*
+*	Author: Tumi Snær Gíslason
+*	
+*	Byacc/J Parser for Myrkvi
+*
+*
+*
+*
+*
+*
+
+
+%{
+	import java.io.*;
+	import java.util.*;	
+%}
+
+%token _if,_elif,_else,_while,_def,_func,_ret,_var,_literal,_name,_opname
+//%type <obj> program, function, decl, expr, condexpr, body
+
+%%
+
+start
+	:	program //{ generateProgram (name,((Vector<Object>)($1)).toArray()); }
+	;
+
+program
+	:	program function
+	|	function
+	;
+
+function
+	:	_def _func '(' _name ')' ':' '\n\t' decl '\n' expr '\n'
+	;
+
+decl
+	:	_var _name
+	;
+
+expr
+	:	_name
+	|	_name '=' expr
+	|	_name '(' expr ')'
+	|	_ret expr
+	|	_opname expr
+	|	expr _opname expr
+	|	_literal
+	|	'(' expr ')'
+	|	condexpr
+	|	_while '(' expr ')' body
+	;
+
+condexpr
+	:	_if '(' expr ')' body _elif '(' expr ')' body _else body
+	;
+
+body
+	:	'\n' _expr
