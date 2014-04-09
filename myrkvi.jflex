@@ -1,114 +1,71 @@
 /*
-*   Author: Tumi Snær Gíslason
+*   Author:     Snorri Agnarsson
+*               Tumi Snær Gíslason
 *
 *   A lexical analyser for the programming language Myrkvi,
 *   using JFlex (the JFlex.jar file is required).
 *   
 *   Compilation:
-*       java -jar JFlex.jar myrkvi.jflex
-*       javac myrkvi.java
+*       java -jar JFlex.jar Myrkvi.jflex
+*       javac Myrkvi.java
 *
-*   Example of usage:
-*       java myrkvi < test.txt
 *
 */
 
 %%
 
 %public
-%class Myrkvi
+%class MyrkviLexer
 %byaccj
 %unicode
-%line
-%column
 
 %{
-    public final int _error = -1;
-    public final int _if = 0;
-    public final int _elif = 1;
-    public final int _else = 2;
-    public final int _while = 3;
-    public final int _def = 4;
-    public final int _func = 5;
-    public final int _ret = 6;
-    public final int _var = 7;
-    public final int _literal = 8;
-    public final int _name = 9;
-    public final int _opname = 10;
-    
-    public int getLine(){return yyline;}
-    public int getColumn(){return yycolumn;}
-/*
-    class Yytoken{
 
-        public int tok;
-        public String text;
-        public Yytoken(int tok, String text){
+public MyrkviParser yyparser;
 
-            this.tok = tok;
-            this.text = text;
-
-        }
-
-    }
-*/
-
-    public static void main(String[]args)
-    throws Exception{
-
-        Yytoken token;
-        myrkvi lexer = new myrkvi(System.in);
-        while((token=lexer.yylex()) != null){
-
-            int line = lexer.getLine();
-            int column = lexer.getColumn();
-            int tok = token.tok;
-            String text = token.text;
-            System.out.println("Line "+line+", column "+column+", lexeme \""+text+"\", token "+tok);
-
-        }
-
-    }
+public MyrkviLexer ( java.io.Reader r, MyrkviParser yyparser )
+{
+    this(r);
+    this.yyparser = yyparser;
+}
 
 %}
 
     /*Regex*/
 
-_ws = [ \n\t\r]
-_newline = [\n]
-_tab = [\t]
+WS = [ \n\t\r]
+IF = if
+ELIF = elif
+ELSE = else
 
-_if = if
-_elif = elif
-_else = else
+WHILE = while
 
-_while = while
+DEF = def
+RETURN = return
+VAR = var
+PRINT = print
 
-_def = def
-_func = function
-_ret = return
-_var = var
+DIGIT = [0-9]
+DOUBLE = {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
+INT = {DIGIT}+
+OPCHAR = [\+\-*/]
 
-_digit = [0-9]
-_double = {_digit}+\.{_digit}+([eE][+-]?{_digit}+)?
-_int = {_digit}+
-_opname = [+-*/]
+//INIT = [a-zA-ZþæöðáéýúíóÞÆÖÐÁÉÝÚÍÓ]
+SYMBOL = [=(){};,]
+STRING = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"'
+NAME=[:letter:]([:letter:]|{DIGIT})*
 
-_init = [a-zA-ZþæöðáéýúíóÞÆÖÐÁÉÝÚÍÓ]
-_symbol = [\"!%\-&/=?~\^+*:<>|\(\)\{\}]
-_name = ({_init}|{_digit}|{_symbol})*
-_string = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"'
+TRUE = True
+FALSE = False
 
-_true = True
-_false = False
+NULL = NULL
 
-_null = NULL
 
 %%
 
     /* JFlex rules */
 
-{_ws}
+{WS}
 {
     
 } /* whitespace -> ignored */
@@ -116,64 +73,74 @@ _null = NULL
 "#".*$
 {
     
-} /* comment -> ignored */
+} /* comment -> line ignored */
 
-{_if}
-{
-    return new Yytoken(_if,yytext());
-} /* token 0 */
 
-{_elif}
+{IF}
 {
-    return new Yytoken(_elif,yytext());
-} /* token 1 */
+    return MyrkviParser.IF;
+}
 
-{_else}
+{ELIF}
 {
-    return new Yytoken(_else,yytext());
-} /* token 2 */
+    return MyrkviParser.ELIF;
+}
 
-{_while}
+{ELSE}
 {
-    return new Yytoken(_while,yytext());
-} /* token 3 */
+    return MyrkviParser.ELSE;
+}
 
-{_def}
+{WHILE}
 {
-    return new Yytoken(_def,yytext());
-} /* token 4 */
+    return MyrkviParser.WHILE;
+}
 
-{_func}
+{DEF}
 {
-    return new Yytoken(_func,yytext());
-} /* token 5 */
+    return MyrkviParser.DEF;
+}
 
-{_ret}
+{RETURN}
 {
-    return new Yytoken(_ret,yytext());
-} /* token 6 */
+    return MyrkviParser.RETURN;
+}
 
-{_var}
+{VAR}
 {
-    return new Yytoken(_var,yytext());
-} /* token 7 */
+    return MyrkviParser.VAR;
+}
 
-{_double}|{_int}|{_string}|{_true}|{_false}|{_null}
-{
-    return new Yytoken(_literal,yytext());
-} /* token 8 */
 
-{_name}
+{PRINT}
 {
-    return new Yytoken(_name,yytext());
-} /* token 9 */
+    return MyrkviParser.PRINT;
+}
 
-{_opname}
+
+{NAME}
 {
-    return new Yytoken(_opname,yytext());
-} /* token 10 */
+    yyparser.yylval = new MyrkviParserVal(yytext());
+    return MyrkviParser.NAME;
+}
+
+{DOUBLE}|{INT}|{STRING}|{TRUE}|{FALSE}|{NULL}
+{
+    yyparser.yylval = new MyrkviParserVal(yytext());
+    return MyrkviParser.LITERAL;
+}
+
+{OPCHAR}+
+{
+    yyparser.yylval = new MyrkviParserVal(yytext());
+    return MyrkviParser.OPNAME;
+}
+
+{SYMBOL} {
+    return yycharat(0);
+}
 
 .
 {
-    return(new Yytoken(_error,yytext()));
-}   /* if nothing else is appropriate -> error, token -1*/
+    return MyrkviParser.YYERRCODE;
+}

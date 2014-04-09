@@ -1,27 +1,35 @@
 /*
-*	Author: Tumi Snær Gíslason
+*	Author: 	Snorri Agnarsson 
+*				Tumi Snær Gíslason
 *	
 *	Byacc/J Parser for Myrkvi
 *
+*	Compilation(example with y.output file):
 *
+*		byaccj -vJ -Jclass=MyrkviParser myrkvi.byaccj
+*		javac MyrkviParser.java MyrkviParserVal.java
 *
-*
-*
-*
-
+*/
 
 %{
 	import java.io.*;
 	import java.util.*;	
 %}
 
-%token _if,_elif,_else,_while,_def,_func,_ret,_var,_literal,_name,_opname
-//%type <obj> program, function, decl, expr, condexpr, body
+//%type<obj> program, function, exprs, expr, ifexpr, elifexpr, elseexpr, body
+
+%token<sval> LITERAL, NAME, OPNAME
+%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT
+%left RETURN '=' OPNAME PRINT
+//%left UNOP
 
 %%
 
 start
-	:	program //{ generateProgram (name,((Vector<Object>)($1)).toArray()); }
+	:								{ emit("\""+name+".mexe\" = main in"); }
+									{ emit("!{{"); }
+		program
+									{ emit("}}*BASIS;"); }
 	;
 
 program
@@ -30,29 +38,177 @@ program
 	;
 
 function
-	:	_def _func '(' _name ')' ':' '\n\t' decl '\n' expr '\n'
+	:	DEF NAME '(' 				{ varCount = 0; }
+									{ varTable = new HashMap<String,Integer>(); }
+		
+		optnames ')' 				{ addVar($2, optVarTable); }
+									{ emit("#\""+$2+"[f"+varCount+"]\" = "); }
+									{ emit("["); }
+									{ emit("(MakeVal null)"); }
+		
+		'{' decls exprs '}' 		{ emit("(Return)"); }
+									{ emit("];"); }
+	;
+
+optnames
+	:	/* nothing */
+	|	dummynames
+	;
+
+dummynames
+	:	dummynames ',' NAME 		{ addVar($3, varTable); }
+	|	NAME		 				{ addVar($1, varTable); }	
+	;
+
+names
+	:	names ',' NAME 				{ addVar($3, varTable); }
+									{ emit("(Push)"); }
+	|	NAME 						{ addVar($1, varTable); }
+									{ emit("(Push)"); }	
+	;
+
+decls
+	:	/* nothing */
+	| 	decl ';' decls
 	;
 
 decl
-	:	_var _name
+	: 	VAR names
 	;
+
+
+exprs
+	:	expr ';' exprs
+	|	expr ';'
+	; 
 
 expr
-	:	_name
-	|	_name '=' expr
-	|	_name '(' expr ')'
-	|	_ret expr
-	|	_opname expr
-	|	expr _opname expr
-	|	_literal
+	:	NAME 						{ emit("(Fetch "+findVar($1, varTable)+")"); }
+	
+	|	NAME '=' expr 				{ emit("(Store "+findVar($1, varTable)+")"); }
+	
+	|	NAME '(' optargs ')'		{ optVarCount = findVar($1, optVarTable); }
+									{ emit("(Call #\""+$1+"[f"+optVarCount+"]\" "+optVarCount+")"); }
+	
+	|	PRINT expr					{ emit("(Call #\"writeln[f1]\" 1)"); }
+	
+	|	RETURN expr 				{ emit("(Return)"); }
+	
+	|	OPNAME expr 				{ emit("(Call #\""+$1+"[f1]\" 1)"); }
+	
+	|	expr OPNAME 				{ emit("(Push)"); } 
+		expr 						{ emit("(Call #\""+$2+"[f2]\" 2)"); }
+	
+	|	LITERAL						{ emit("(MakeVal "+$1+")"); }			
+	
 	|	'(' expr ')'
-	|	condexpr
-	|	_while '(' expr ')' body
+	
+	|	ifexpr						
+	
+	|	WHILE '('					{}
+		expr ')' body				{}
+									
 	;
 
-condexpr
-	:	_if '(' expr ')' body _elif '(' expr ')' body _else body
+optargs
+	:	
+	|	args
+	;
+
+args
+	:	args ',' expr
+	|	expr
+	;
+
+ifexpr
+	:	IF '(' expr ')' body elifexpr elseexpr
+	;
+
+elifexpr
+	:	ELIF '(' expr ')' body elifexpr
+	|	/* nothing */
+	;
+
+elseexpr
+	:	ELSE body
+	|	/* nothing */
 	;
 
 body
-	:	'\n' _expr
+	:	'{' exprs '}'
+	;
+
+
+%%
+
+
+	static private String name;
+	private MyrkviLexer lexer;
+	private int varCount;
+	private int optVarCount;
+	private HashMap<String,Integer> varTable;
+	private HashMap<String,Integer> optVarTable = new HashMap<String,Integer>();
+
+	private void addVar( String name , HashMap<String,Integer> table)
+	{
+		if( table.get(name) != null )
+			yyerror("Variable/function "+name+" already exists");
+		if(table == varTable)
+			table.put(name,varCount++);
+		else if(table == optVarTable)
+			table.put(name,varCount);
+	}
+
+	private int findVar( String name , HashMap<String,Integer> table)
+	{
+		Integer res = table.get(name);
+		if( res == null )
+			yyerror("Variable/function "+name+" does not exist");
+		return res;
+	}
+
+
+	int last_token_read;
+
+	private int yylex()
+	{
+		int yyl_return = -1;
+		try
+		{
+			yylval = null;
+			last_token_read = yyl_return = lexer.yylex();
+			//System.out.println(MyrkviParser.yyname[yyl_return]);
+			if( yylval==null )
+				yylval = new MyrkviParserVal(MyrkviParser.yyname[yyl_return]);
+		}
+		catch (IOException e)
+		{
+			System.err.println("IO error: "+e);
+		}
+		return yyl_return;
+	}
+
+
+	public void yyerror( String error ){
+		System.out.println("Error:  "+error);
+		System.out.println("Token:  "+MyrkviParser.yyname[last_token_read]);
+		System.exit(1);
+	}
+
+	public MyrkviParser( Reader r )
+	{
+		lexer = new MyrkviLexer(r,this);
+	}
+
+	public static void main( String args[] )
+	  	throws IOException
+	{
+		MyrkviParser yyparser = new MyrkviParser(new FileReader(args[0]));
+		name = args[0].substring(0,args[0].lastIndexOf('.'));
+		yyparser.yyparse();
+	}
+
+	public static void emit( String s )
+	{
+		System.out.printf("%s\n",s);
+	}
