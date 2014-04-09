@@ -1,5 +1,4 @@
 Myrkvi
+=======
 
-Myrkvi programming language
-Compilers, University of Iceland 2014
-Instructor: Snorri Agnarsson
+Myrkvi programming language, made for the course "Compilers", University of Iceland 2014. Instructor: Snorri Agnarsson.
