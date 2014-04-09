@@ -1,5 +1,4 @@
 Myrkvi
-======
 
 Myrkvi programming language
 Compilers, University of Iceland 2014
