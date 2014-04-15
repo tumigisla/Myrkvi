@@ -18,9 +18,10 @@
 
 //%type<obj> program, function, exprs, expr, ifexpr, elifexpr, elseexpr, body
 
-%token<sval> LITERAL, NAME, OPNAME
-%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT
-%left RETURN '=' OPNAME PRINT
+%token<sval> LITERAL, NAME, OPNAME, PRINT
+%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP
+%right PRINT,RETURN, ANDOP,OROP
+%left '=',OPNAME,NOTOP
 //%left UNOP
 
 %%
@@ -46,8 +47,8 @@ function
 									{ emit("["); }
 									{ emit("(MakeVal null)"); }
 		
-		'{' decls exprs '}' 		{ emit("(Return)"); }
-									{ emit("];"); }
+		'{' decls exprs '}'			{ emit("(Return)"); }
+									{ emit("];"); }	
 	;
 
 optnames
@@ -64,7 +65,10 @@ names
 	:	names ',' NAME 				{ addVar($3, varTable); }
 									{ emit("(Push)"); }
 	|	NAME 						{ addVar($1, varTable); }
-									{ emit("(Push)"); }	
+									{ emit("(Push)"); }
+	|	NAME						{ addVar($1, varTable); }
+									{ emit("(Push)"); }
+		'=' expr					{ emit("(Store "+findVar($1, varTable)+")"); }			
 	;
 
 decls
@@ -93,9 +97,9 @@ expr
 	|	PRINT expr					{ emit("(Call #\"writeln[f1]\" 1)"); }
 	
 	|	RETURN expr 				{ emit("(Return)"); }
-	
+
 	|	OPNAME expr 				{ emit("(Call #\""+$1+"[f1]\" 1)"); }
-	
+
 	|	expr OPNAME 				{ emit("(Push)"); } 
 		expr 						{ emit("(Call #\""+$2+"[f2]\" 2)"); }
 	
@@ -104,11 +108,30 @@ expr
 	|	'(' expr ')'
 	
 	|	ifexpr						
+
+	|	NOTOP expr 					{ emit("(Not)"); }
+
+	|	expr ANDOP					{ emit("(Push)"); }
+			 						{ emit("(GoFalse _and1)"); }
+		expr						{ emit("_and1:"); }
 	
-	|	WHILE '('					{}
-		expr ')' body				{}
+	|	expr OROP 					{ emit("(Push)"); }
+			 						{ emit("(GoTrue _or1)"); }
+		expr						{ emit("_or1:"); }
+
+	|	WHILE 						{ emit("_whileCond:"); }
+		expr          				{ emit("(Push)"); }
+									{ emit("(GoFalse _whileEnd)"); }
+		body						{ emit("(Go _whileCond)"); }
+									{ emit("_whileEnd:"); }
 									
 	;
+
+
+//list
+//	:	'['']' 						{ l1 = new ArrayList<Integer>(); }
+	//|	LITERAL ':' NAME            { $3.add(0,$1); }
+//	;
 
 optargs
 	:	
@@ -116,21 +139,34 @@ optargs
 	;
 
 args
-	:	args ',' expr
-	|	expr
+	:	args 						{ emit("(Push)"); }
+		',' expr 				
+	|	expr 						
 	;
 
+
 ifexpr
-	:	IF '(' expr ')' body elifexpr elseexpr
+	:	IF expr  					{ emit("(Push)"); }
+									{ emit("(GoFalse _"+ ++elifCount +")"); }
+		body  						{ emit("(Go _endIf)"); }
+									{ emit("_"+ elifCount +":"); }
+		elifexpr elseexpr			{ emit("_endIf:"); }
+									{ elifCount = 0; }
+									
+									
 	;
 
 elifexpr
-	:	ELIF '(' expr ')' body elifexpr
+	:	ELIF expr 					{ emit("(Push)"); }
+									{ emit("(GoFalse _elif"+ ++elifCount +")"); }
+		body 						{ emit("(Go _endIf)"); }
+									{ emit("_elif"+ elifCount +":"); }
+		elifexpr
 	|	/* nothing */
 	;
 
 elseexpr
-	:	ELSE body
+	:	ELSE body 			
 	|	/* nothing */
 	;
 
@@ -148,6 +184,8 @@ body
 	private int optVarCount;
 	private HashMap<String,Integer> varTable;
 	private HashMap<String,Integer> optVarTable = new HashMap<String,Integer>();
+	private int elifCount = 0;
+	private List<Integer> l1;
 
 	private void addVar( String name , HashMap<String,Integer> table)
 	{

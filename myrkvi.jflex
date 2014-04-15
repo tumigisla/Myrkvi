@@ -48,17 +48,20 @@ PRINT = print
 DIGIT = [0-9]
 DOUBLE = {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 INT = {DIGIT}+
-OPCHAR = [\+\-*/]
+OPCHAR = [\+\-*/<>]
+NOTOP = not
+ANDOP = and
+OROP = or
 
 //INIT = [a-zA-ZþæöðáéýúíóÞÆÖÐÁÉÝÚÍÓ]
-SYMBOL = [=(){};,]
-STRING = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"'
+SYMBOL = [=(){};\:,\[\]]
+STRING = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
 NAME=[:letter:]([:letter:]|{DIGIT})*
 
-TRUE = True
-FALSE = False
+TRUE = true
+FALSE = false
 
-NULL = NULL
+NULL = null
 
 
 %%
@@ -112,22 +115,36 @@ NULL = NULL
 }
 
 
+{NOTOP}
+{
+    return MyrkviParser.NOTOP;
+}
+
+{ANDOP}
+{
+    return MyrkviParser.ANDOP;
+}
+
+{OROP}
+{
+    return MyrkviParser.OROP;
+}
+
 {PRINT}
 {
     return MyrkviParser.PRINT;
-}
-
-
-{NAME}
-{
-    yyparser.yylval = new MyrkviParserVal(yytext());
-    return MyrkviParser.NAME;
 }
 
 {DOUBLE}|{INT}|{STRING}|{TRUE}|{FALSE}|{NULL}
 {
     yyparser.yylval = new MyrkviParserVal(yytext());
     return MyrkviParser.LITERAL;
+}
+
+{NAME}
+{
+    yyparser.yylval = new MyrkviParserVal(yytext());
+    return MyrkviParser.NAME;
 }
 
 {OPCHAR}+
