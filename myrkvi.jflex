@@ -11,6 +11,9 @@
 *
 *
 */
+//import java.io.*;
+//import java.util.*;
+
 
 %%
 
@@ -22,6 +25,16 @@
 %{
 
 public MyrkviParser yyparser;
+public int indentCount = 0;
+public int prevIndentCount = 0;
+public String prevIndent = "^[^\t].*";
+public String currentIndent = "^[^\t].*";
+public String startingIndentRegex = "^[^\t].*";     // line not starting with a tab
+// indent levels
+//public String[] indentations = ["^[^\t].*","^\t.*","^\t\t.*","^\t\t\t.*"]; 
+
+
+//public Deque<Integer> indentStack = new ArrayDeque<Integer>();
 
 public MyrkviLexer ( java.io.Reader r, MyrkviParser yyparser )
 {
@@ -33,7 +46,7 @@ public MyrkviLexer ( java.io.Reader r, MyrkviParser yyparser )
 
     /*Regex*/
 
-WS = [ \n\t\r]
+WS = [ \r\t]
 IF = if
 ELIF = elif
 ELSE = else
@@ -53,7 +66,7 @@ NOTOP = not
 ANDOP = and
 OROP = or
 
-//INIT = [a-zA-ZþæöðáéýúíóÞÆÖÐÁÉÝÚÍÓ]
+NEWLINE = \n
 SYMBOL = [=(){};\:,\[\]]
 STRING = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
 NAME=[:letter:]([:letter:]|{DIGIT})*
@@ -68,6 +81,7 @@ NULL = null
 
     /* JFlex rules */
 
+
 {WS}
 {
     
@@ -78,6 +92,10 @@ NULL = null
     
 } /* comment -> line ignored */
 
+{NEWLINE}
+{
+    return MyrkviParser.NEWLINE;
+}
 
 {IF}
 {
@@ -153,7 +171,8 @@ NULL = null
     return MyrkviParser.OPNAME;
 }
 
-{SYMBOL} {
+{SYMBOL}
+{
     return yycharat(0);
 }
 

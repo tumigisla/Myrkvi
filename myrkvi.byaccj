@@ -11,15 +11,8 @@
 *
 */
 
-%{
-	import java.io.*;
-	import java.util.*;	
-%}
-
-//%type<obj> program, function, exprs, expr, ifexpr, elifexpr, elseexpr, body
-
 %token<sval> LITERAL, NAME, OPNAME, PRINT
-%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP
+%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP,NEWLINE
 %right PRINT,RETURN, ANDOP,OROP
 %left '=',OPNAME,NOTOP
 //%left UNOP
@@ -47,9 +40,11 @@ function
 									{ emit("["); }
 									{ emit("(MakeVal null)"); }
 		
-		'{' decls exprs '}'			{ emit("(Return)"); }
-									{ emit("];"); }	
+		body						{ emit("(Return)"); }
+									{ emit("];"); }
+
 	;
+
 
 optnames
 	:	/* nothing */
@@ -73,7 +68,7 @@ names
 
 decls
 	:	/* nothing */
-	| 	decl ';' decls
+	| 	decl NEWLINE decls
 	;
 
 decl
@@ -82,8 +77,8 @@ decl
 
 
 exprs
-	:	expr ';' exprs
-	|	expr ';'
+	:	expr NEWLINE exprs
+	|	expr NEWLINE
 	; 
 
 expr
@@ -93,7 +88,7 @@ expr
 	
 	|	NAME '(' optargs ')'		{ optVarCount = findVar($1, optVarTable); }
 									{ emit("(Call #\""+$1+"[f"+optVarCount+"]\" "+optVarCount+")"); }
-	
+
 	|	PRINT expr					{ emit("(Call #\"writeln[f1]\" 1)"); }
 	
 	|	RETURN expr 				{ emit("(Return)"); }
@@ -102,7 +97,7 @@ expr
 
 	|	expr OPNAME 				{ emit("(Push)"); } 
 		expr 						{ emit("(Call #\""+$2+"[f2]\" 2)"); }
-	
+									
 	|	LITERAL						{ emit("(MakeVal "+$1+")"); }			
 	
 	|	'(' expr ')'
@@ -128,13 +123,8 @@ expr
 	;
 
 
-//list
-//	:	'['']' 						{ l1 = new ArrayList<Integer>(); }
-	//|	LITERAL ':' NAME            { $3.add(0,$1); }
-//	;
-
 optargs
-	:	
+	:	/* nothing */
 	|	args
 	;
 
@@ -171,7 +161,7 @@ elseexpr
 	;
 
 body
-	:	'{' exprs '}'
+	:	'{' NEWLINE decls exprs '}'
 	;
 
 
@@ -185,7 +175,6 @@ body
 	private HashMap<String,Integer> varTable;
 	private HashMap<String,Integer> optVarTable = new HashMap<String,Integer>();
 	private int elifCount = 0;
-	private List<Integer> l1;
 
 	private void addVar( String name , HashMap<String,Integer> table)
 	{
@@ -248,5 +237,5 @@ body
 
 	public static void emit( String s )
 	{
-		System.out.printf("%s\n",s);
+		System.out.println(s);
 	}
