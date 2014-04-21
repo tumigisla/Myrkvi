@@ -47,11 +47,12 @@ DEF = def
 RETURN = return
 VAR = var
 PRINT = print
+PRINTLN = println
 
 DIGIT = [0-9]
 DOUBLE = {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 INT = {DIGIT}+
-OPCHAR = [\+\-*/<>]
+OPCHAR = [\+\-*/<>%] | == | <= | >=
 NOTOP = not
 ANDOP = and
 OROP = or
@@ -136,6 +137,11 @@ NULL = null
 {PRINT}
 {
     return MyrkviParser.PRINT;
+}
+
+{PRINTLN}
+{
+    return MyrkviParser.PRINTLN;
 }
 
 {DOUBLE}|{INT}|{STRING}|{TRUE}|{FALSE}|{NULL}

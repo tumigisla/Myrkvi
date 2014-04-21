@@ -17,9 +17,9 @@
 %}
 
 %token<sval> LITERAL, NAME, OPNAME, PRINT
-%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP,
-%right PRINT,RETURN, ANDOP,OROP
-%left '=',OPNAME,NOTOP
+%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,PRINTLN,NOTOP,ANDOP,OROP
+%right PRINT,PRINTLN,RETURN, ANDOP,OROP,'='
+%left NOTOP,OPNAME
 
 %%
 
@@ -97,7 +97,7 @@ exprs
 expr
 	:	NAME 						
 			{ emit("(Fetch "+findVar($1, varTable)+")"); }
-	
+
 	|	NAME '=' expr 				
 			{ emit("(Store "+findVar($1, varTable)+")"); }
 	
@@ -105,7 +105,10 @@ expr
 			{ optVarCount = findVar($1, optVarTable); }
 			{ emit("(Call #\""+$1+"[f"+optVarCount+"]\" "+optVarCount+")"); }
 
-	|	PRINT expr					
+	|	PRINT expr				
+			{ emit("(Call #\"write[f1]\" 1)"); }
+
+	|	PRINTLN expr
 			{ emit("(Call #\"writeln[f1]\" 1)"); }
 	
 	|	RETURN expr 				
