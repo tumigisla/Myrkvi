@@ -36,7 +36,7 @@ public MyrkviLexer ( java.io.Reader r, MyrkviParser yyparser )
 
     /*Regex*/
 
-WS = [ \r\t]
+WS = [ \r\t\n]
 IF = if
 ELIF = elif
 ELSE = else
@@ -56,7 +56,6 @@ NOTOP = not
 ANDOP = and
 OROP = or
 
-NEWLINE = \n
 SYMBOL = [=(){};\:,\[\]]
 STRING = \"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
 NAME=[:letter:]([:letter:]|{DIGIT})*
@@ -82,10 +81,6 @@ NULL = null
     
 } /* comment -> line ignored */
 
-{NEWLINE}
-{
-    return MyrkviParser.NEWLINE;
-}
 
 {IF}
 {

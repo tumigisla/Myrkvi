@@ -11,11 +11,15 @@
 *
 */
 
+%{
+ 	import java.io.*;
+ 	import java.util.*;	
+%}
+
 %token<sval> LITERAL, NAME, OPNAME, PRINT
-%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP,NEWLINE
+%token IF,ELIF,ELSE,WHILE,DEF,RETURN,VAR,PRINT,NOTOP,ANDOP,OROP,
 %right PRINT,RETURN, ANDOP,OROP
 %left '=',OPNAME,NOTOP
-//%left UNOP
 
 %%
 
@@ -77,7 +81,7 @@ names
 
 decls
 	:	/* nothing */
-	| 	decl NEWLINE decls
+	| 	decl ';' decls
 	;
 
 decl
@@ -86,8 +90,8 @@ decl
 
 
 exprs
-	:	expr NEWLINE exprs
-	|	expr NEWLINE
+	:	expr ';' exprs
+	|	expr ';'
 	; 
 
 expr
@@ -127,15 +131,15 @@ expr
 
 	|	expr ANDOP					
 			{ emit("(Push)"); }
-			{ emit("(GoFalse _and1)"); }
+			{ emit("(GoFalse _and"+ ++boolCount +")"); }
 		expr						
-			{ emit("_and1:"); }
+			{ emit("_and"+boolCount+":"); }
 	
 	|	expr OROP 					
 			{ emit("(Push)"); }
-			{ emit("(GoTrue _or1)"); }
+			{ emit("(GoTrue _or"+ ++boolCount +")"); }
 		expr						
-			{ emit("_or1:"); }
+			{ emit("_or"+boolCount+":"); }
 
 	|	WHILE 						
 			{ emit("_whileCond:"); }
@@ -194,8 +198,9 @@ elseexpr
 	;
 
 body
-	:	'{' NEWLINE decls exprs '}'
+	:	'{' decls exprs '}'
 	;
+
 
 
 
@@ -206,6 +211,7 @@ body
 	static private String name;
 	private MyrkviLexer lexer;
 	private int varCount;
+	private int boolCount = 0;
 	private int optVarCount;
 	private HashMap<String,Integer> varTable;
 	private HashMap<String,Integer> optVarTable = new HashMap<String,Integer>();
