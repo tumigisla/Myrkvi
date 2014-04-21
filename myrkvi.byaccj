@@ -20,10 +20,10 @@
 %%
 
 start
-	:								{ emit("\""+name+".mexe\" = main in"); }
-									{ emit("!{{"); }
+	:		{ emit("\""+name+".mexe\" = main in"); }
+			{ emit("!{{"); }
 		program
-									{ emit("}}*BASIS;"); }
+			{ emit("}}*BASIS;"); }
 	;
 
 program
@@ -32,38 +32,47 @@ program
 	;
 
 function
-	:	DEF NAME '(' 				{ varCount = 0; }
-									{ varTable = new HashMap<String,Integer>(); }
-		
-		optnames ')' 				{ addVar($2, optVarTable); }
-									{ emit("#\""+$2+"[f"+varCount+"]\" = "); }
-									{ emit("["); }
-									{ emit("(MakeVal null)"); }
-		
-		body						{ emit("(Return)"); }
-									{ emit("];"); }
-
+	:	DEF NAME '(' 				
+			{ varCount = 0; }
+			{ varTable = new HashMap<String,Integer>(); }	
+		optnames ')' 				
+			{ addVar($2, optVarTable); }
+			{ emit("#\""+$2+"[f"+varCount+"]\" = "); }
+			{ emit("["); }
+			{ emit("(MakeVal null)"); }
+		body						
+			{ emit("(Return)"); }
+			{ emit("];"); }
 	;
 
 
 optnames
-	:	/* nothing */
-	|	dummynames
+	:	/* nothing */	
+	|	dummynames	
 	;
 
 dummynames
-	:	dummynames ',' NAME 		{ addVar($3, varTable); }
-	|	NAME		 				{ addVar($1, varTable); }	
+	:	dummynames ',' NAME 		
+			{ addVar($3, varTable); }
+	
+	|	NAME		 				
+			{ addVar($1, varTable); }	
 	;
 
 names
-	:	names ',' NAME 				{ addVar($3, varTable); }
-									{ emit("(Push)"); }
-	|	NAME 						{ addVar($1, varTable); }
-									{ emit("(Push)"); }
-	|	NAME						{ addVar($1, varTable); }
-									{ emit("(Push)"); }
-		'=' expr					{ emit("(Store "+findVar($1, varTable)+")"); }			
+	:	names ',' NAME 				
+			{ addVar($3, varTable); }
+			{ emit("(Push)"); }
+	
+	|	NAME 						
+			{ addVar($1, varTable); }
+			{ emit("(Push)"); }
+	
+	|	NAME						
+			{ addVar($1, varTable); }
+			{ emit("(Push)"); }
+		'=' expr					
+			{ emit("(Store "+findVar($1, varTable)+")"); }			
 	;
 
 decls
@@ -82,43 +91,60 @@ exprs
 	; 
 
 expr
-	:	NAME 						{ emit("(Fetch "+findVar($1, varTable)+")"); }
+	:	NAME 						
+			{ emit("(Fetch "+findVar($1, varTable)+")"); }
 	
-	|	NAME '=' expr 				{ emit("(Store "+findVar($1, varTable)+")"); }
+	|	NAME '=' expr 				
+			{ emit("(Store "+findVar($1, varTable)+")"); }
 	
-	|	NAME '(' optargs ')'		{ optVarCount = findVar($1, optVarTable); }
-									{ emit("(Call #\""+$1+"[f"+optVarCount+"]\" "+optVarCount+")"); }
+	|	NAME '(' optargs ')'		
+			{ optVarCount = findVar($1, optVarTable); }
+			{ emit("(Call #\""+$1+"[f"+optVarCount+"]\" "+optVarCount+")"); }
 
-	|	PRINT expr					{ emit("(Call #\"writeln[f1]\" 1)"); }
+	|	PRINT expr					
+			{ emit("(Call #\"writeln[f1]\" 1)"); }
 	
-	|	RETURN expr 				{ emit("(Return)"); }
+	|	RETURN expr 				
+			{ emit("(Return)"); }
 
-	|	OPNAME expr 				{ emit("(Call #\""+$1+"[f1]\" 1)"); }
+	|	OPNAME expr 				
+			{ emit("(Call #\""+$1+"[f1]\" 1)"); }
 
-	|	expr OPNAME 				{ emit("(Push)"); } 
-		expr 						{ emit("(Call #\""+$2+"[f2]\" 2)"); }
+	|	expr OPNAME 				
+			{ emit("(Push)"); } 
+		expr 						
+			{ emit("(Call #\""+$2+"[f2]\" 2)"); }
 									
-	|	LITERAL						{ emit("(MakeVal "+$1+")"); }			
+	|	LITERAL						
+			{ emit("(MakeVal "+$1+")"); }			
 	
 	|	'(' expr ')'
 	
 	|	ifexpr						
 
-	|	NOTOP expr 					{ emit("(Not)"); }
+	|	NOTOP expr 					
+			{ emit("(Not)"); }
 
-	|	expr ANDOP					{ emit("(Push)"); }
-			 						{ emit("(GoFalse _and1)"); }
-		expr						{ emit("_and1:"); }
+	|	expr ANDOP					
+			{ emit("(Push)"); }
+			{ emit("(GoFalse _and1)"); }
+		expr						
+			{ emit("_and1:"); }
 	
-	|	expr OROP 					{ emit("(Push)"); }
-			 						{ emit("(GoTrue _or1)"); }
-		expr						{ emit("_or1:"); }
+	|	expr OROP 					
+			{ emit("(Push)"); }
+			{ emit("(GoTrue _or1)"); }
+		expr						
+			{ emit("_or1:"); }
 
-	|	WHILE 						{ emit("_whileCond:"); }
-		expr          				{ emit("(Push)"); }
-									{ emit("(GoFalse _whileEnd)"); }
-		body						{ emit("(Go _whileCond)"); }
-									{ emit("_whileEnd:"); }
+	|	WHILE 						
+			{ emit("_whileCond:"); }
+		expr          				
+			{ emit("(Push)"); }
+			{ emit("(GoFalse _whileEnd)"); }
+		body						
+			{ emit("(Go _whileCond)"); }
+			{ emit("_whileEnd:"); }
 									
 	;
 
@@ -129,30 +155,37 @@ optargs
 	;
 
 args
-	:	args 						{ emit("(Push)"); }
+	:	args 						
+			{ emit("(Push)"); }
 		',' expr 				
+	
 	|	expr 						
 	;
 
 
 ifexpr
-	:	IF expr  					{ emit("(Push)"); }
-									{ emit("(GoFalse _"+ ++elifCount +")"); }
-		body  						{ emit("(Go _endIf)"); }
-									{ emit("_"+ elifCount +":"); }
-		elifexpr elseexpr			{ emit("_endIf:"); }
-									{ elifCount = 0; }
+	:	IF expr  					
+			{ emit("(Push)"); }
+			{ emit("(GoFalse _"+ ++elifCount +")"); }
+		body  						
+			{ emit("(Go _endIf)"); }
+			{ emit("_"+ elifCount +":"); }
+		elifexpr elseexpr			
+			{ emit("_endIf:"); }
+			{ elifCount = 0; }
 									
 									
 	;
 
 elifexpr
-	:	ELIF expr 					{ emit("(Push)"); }
-									{ emit("(GoFalse _elif"+ ++elifCount +")"); }
-		body 						{ emit("(Go _endIf)"); }
-									{ emit("_elif"+ elifCount +":"); }
+	:	/* nothing */
+	|	ELIF expr 					
+			{ emit("(Push)"); }
+			{ emit("(GoFalse _elif"+ ++elifCount +")"); }
+		body 						
+			{ emit("(Go _endIf)"); }
+			{ emit("_elif"+ elifCount +":"); }
 		elifexpr
-	|	/* nothing */
 	;
 
 elseexpr
@@ -163,6 +196,8 @@ elseexpr
 body
 	:	'{' NEWLINE decls exprs '}'
 	;
+
+
 
 
 %%
