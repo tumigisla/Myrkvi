@@ -25,16 +25,6 @@
 %{
 
 public MyrkviParser yyparser;
-public int indentCount = 0;
-public int prevIndentCount = 0;
-public String prevIndent = "^[^\t].*";
-public String currentIndent = "^[^\t].*";
-public String startingIndentRegex = "^[^\t].*";     // line not starting with a tab
-// indent levels
-//public String[] indentations = ["^[^\t].*","^\t.*","^\t\t.*","^\t\t\t.*"]; 
-
-
-//public Deque<Integer> indentStack = new ArrayDeque<Integer>();
 
 public MyrkviLexer ( java.io.Reader r, MyrkviParser yyparser )
 {
