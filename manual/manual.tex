@@ -1,0 +1,432 @@
+\documentclass[12pt]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[rounded]{syntax}
+\usepackage{minted}
+\usepackage{hyperref}
+\usepackage[margin=1.4in]{geometry}
+\usepackage{fancyvrb}
+\usepackage{framed}
+\usepackage[rounded]{syntax}
+\usepackage{listings}
+
+\renewcommand{\abstractname}{}
+
+\newcommand{\bs}[2]{%
+\begin{minipage}{5in}%
+\begin{syntdiag*}[\left{#1}\right{#2}][5in]%
+}
+\newcommand{\es}{\end{syntdiag*}\end{minipage}}
+
+\title{Manual for the Myrkvi language}
+\author{Tumi Snær Gíslason \\ Instructor \& mentor: Snorri Agnarsson\\\newline Compilers 2014\\University of Iceland}
+
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+Myrkvi is a simple programming language based on Morpho.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+Myrkvi is a programming language made in the course \emph{Compilers} in the spring of 2014. It's a much simpler version of the programming language Morpho\footnote{\url{http://morpho.cs.hi.is/}}  made by Snorri Agnarsson.
+
+It's grammar is simple and the functionality is limited so it can only handle the most basic tasks.
+
+
+\section{Usage and installation}
+
+Myrkvi is written in Java using the \emph{JFlex} and \emph{Byaccj} tools.
+It communicates with Morpho by emitting Morpho assembly language which is then translated by Morpho.
+
+The requirements for compiling and running a Myrkvi program are Java\footnote{\url{https://www.java.com/en/download/}},
+Byaccj\footnote{\url{http://byaccj.sourceforge.net/\#download}},
+JFlex.jar\footnote{\url{https://github.com/tumsgis/Myrkvi/blob/master/JFlex.jar}} and
+morpho.jar\footnote{\url{https://github.com/tumsgis/Myrkvi/blob/master/morpho.jar}}
+
+In Unix, having the requirements, you can set up the Myrkvi environment by using the \emph{makefile}
+
+\begin{framed}
+\begin{minted}[linenos=true]{text}
+> make
+> make test
+\end{minted}
+\end{framed}
+
+
+
+\section{Syntax}
+\subsection{Primitives}
+\subsubsection{Comments}
+\emph{\#} makes sure that the rest of the line is ignored.
+
+\subsubsection{Keywords}
+\emph{if}, \emph{elif}, \emph{else}, \emph{while}, \emph{def}, \emph{return}, \emph{var}, \emph{print}, \emph{println}, \emph{not}, \emph{and}, \emph{or}.
+
+\subsection{Grammar}
+
+%LITERAL
+\begin{framed}
+\synt{LITERAL}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<double>\\
+	<int>\\
+	<string>\\
+	<true>\\
+	<false>\\
+	<null> 
+\end{stack} 
+\es
+\end{framed}
+
+%NAME
+\begin{framed}
+\synt{NAME}:\\
+\indent \bs {>>-} {-><}
+[a-zA-Z]([a-zA-Z]|{0-9})*
+\es
+\end{framed}
+
+%whitespace
+\begin{framed}
+\synt{whitespace}: \\
+\indent \bs {>>-} {-><}
+\begin{stack}
+	"' '"\\
+	'$\backslash r$' \\
+	'$\backslash t$' \\
+	'$\backslash n$'
+\end{stack}
+\es
+\end{framed}
+
+%comment
+\begin{framed}
+\synt{comment}: \\
+\indent \bs {>>-} {-><}
+'\#' .*\$
+\es
+\end{framed}
+
+
+%start
+\begin{framed}
+\synt{start}:\\
+\indent \bs {>>-} {-><} 
+<program>
+\es
+\end{framed}
+
+%program
+\begin{framed}
+\synt{program}:\\
+\indent \bs {>>-} {-><} 
+\begin{rep}<function>\\ \end{rep} 
+\es
+\end{framed}
+
+%function
+\begin{framed}
+\synt{function}: \\
+\indent \bs {>>-} {-><} 
+def <NAME> '(' <optnames>  ')' <body> 
+\es
+\end{framed}
+
+%body
+\begin{framed}
+\synt{body}: \\
+\indent \bs {>>-} {-><}
+'{' <decls> <exprs> '}'
+\es
+\end{framed}
+
+%optnames
+\begin{framed}
+\synt{optnames}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	\\ 
+	<dummynames> 
+\end{stack} 
+\es
+\end{framed}
+
+%dummynames
+\begin{framed}
+\synt{optnames}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<dummynames> ',' <NAME> \\ 
+	<NAME>
+\end{stack} 
+\es
+\end{framed}
+
+%names
+\begin{framed}
+\synt{names}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<names> ',' <NAME> \\ 
+	<NAME> \\ 
+	<NAME> '=' <expr> 
+\end{stack} 
+\es
+\end{framed}
+
+%decls
+\begin{framed}
+\synt{decls}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	\\ 
+	<decl> ';' <decls> 
+\end{stack} 
+\es
+\end{framed}
+
+%decl
+\begin{framed}
+\synt{decl}:\\
+\indent \bs {>>-} {-><} 
+var <names> ';' 
+\es
+\end{framed}
+
+%exprs
+\begin{framed}
+\synt{exprs}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<expr> ';' <exprs>\\
+	 <expr> ';' 
+\end{stack} 
+\es
+\end{framed}
+
+%expr
+\begin{framed}
+\synt{expr}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<NAME>\\ 
+	<NAME> '=' <expr> \\
+	<NAME> '(' <optargs> ')' \\
+	print <expr> \\
+	println <expr> \\
+	return <expr> \\
+	<OPNAME> <expr> \\
+	<expr> <OPNAME> <expr> \\
+	<LITERAL> \\
+	'(' expr ')' \\
+	<ifexpr> \\
+	not <expr> \\
+	<expr> and <expr> \\
+	<expr> or <expr> \\
+	while <expr> <body>	 
+\end{stack} 
+\es
+\end{framed}
+
+%optargs
+\begin{framed}
+\synt{optargs}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	\\ 
+	<args> 
+\end{stack} 
+\es
+\end{framed}
+
+%args
+\begin{framed}
+\synt{args}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	<args> ',' <expr>\\ 
+	<expr> 
+\end{stack} 
+\es
+\end{framed}
+
+%ifexpr
+\begin{framed}
+\synt{ifexpr}:\\
+\indent \bs {>>-} {-><} 
+if <expr> <body> <elifexpr> <elseexpr>
+\es
+\end{framed}
+
+%elifexpr
+\begin{framed}
+\synt{elifexpr}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	\\ 
+	elif <expr> <body> <elifexpr>
+\end{stack} 
+\es
+\end{framed}
+
+%elseexpr
+\begin{framed}
+\synt{elseexpr}:\\
+\indent \bs {>>-} {-><} 
+\begin{stack} 
+	else <body>\\ 
+	
+\end{stack} 
+\es
+\end{framed}
+
+
+
+
+\section{Definition}
+\subsection{Values}
+Floating point numbers,integers,strings,\emph{true},\emph{false} and \emph{null} are all represented the same way as in Morpho, so that they're convenient to use with the Morpho assembly language.
+Every expression is \emph{true} except for \emph{false}, \emph{null} and 0.
+
+
+\subsection{Variables}
+The \emph{var} keyword is used to assign variables. The variables are weakly typed so for example this is a legal expression:
+\begin{framed}
+\begin{minted}[linenos=true]{text}
+var x = 1;
+x = true;
+\end{minted}
+\end{framed}
+
+
+\subsection{Definition of expressions}
+
+\subsubsection{Integers}
+\begin{lstlisting}
+{0-9}+
+\end{lstlisting}
+
+\subsubsection{Floating point numbers}
+\begin{lstlisting}
+{0-9}+\.{0-9}+([eE][+-]?{0-9}+)?
+\end{lstlisting}
+
+\subsubsection{Character}
+Undefined.
+
+\subsubsection{String}
+\begin{lstlisting}
+\"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|
+(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
+\end{lstlisting}
+
+\subsubsection{List}
+Undefined.
+
+\subsubsection{return-expression}
+return \synt{expr}\\
+stops the activation of the current function and returns \synt{expr}.
+If no return-expression is in a function then the last expression of the function is returned.
+
+\subsubsection{Boolean expressions}
+\emph{not} \\
+A unary prefix operation,left associative, having the highest precedence of the booleans.\\\newline
+\emph{and} \\
+A binary operation having right associativity and the same precedence as the \emph{or} operation.\\\newline
+\emph{or} \\
+A binary operation having right associativity.\\\newline
+
+Comparisons: \emph{<},\emph{>},\emph{==},\emph{<=},\emph{>=}\\\newline
+
+All boolean expressions return either \emph{true} or \emph{false}. 
+
+\subsubsection{Call expressions}
+A function can be called simply by calling its name with the right amount of parameters.
+
+For the Morpho compiler to translate the assembly language correctly there must be a function called \emph{main} present.
+
+\subsubsection{Binary operations}
+\emph{+,-,*,/ and \%} are all left associative and have the same precedence.
+
+\subsubsection{Unary operations}
+\emph{not}, \emph{+} and \emph{-}.
+
+\subsubsection{if-expression}
+The if-expression(\emph{if(b)...} where b is a boolean expression) is a control sequence, better described in the grammar rules above.
+
+\subsubsection{while-expression}
+The while-expression(\emph{while(b)...} where b is a boolean expression) is a control sequence, better described in the grammar rules above.
+
+
+
+\section{Examples}
+
+\subsection{Hello,world.}
+\begin{framed}
+\begin{minted}[linenos=true]{text}
+def main()
+{
+	println "Hello,world.";
+}
+\end{minted}
+\end{framed}
+
+\subsection{Fibonacci}
+\begin{framed}
+\begin{minted}[linenos=true]{text}
+def fibo(n)
+{
+	if(n < 2)
+	{
+		return 1;
+	}
+	else
+	{
+		return fibo(n-1) + fibo(n-2);
+	};
+}
+\end{minted}
+\end{framed}
+
+
+\subsection{Fizz-Buzz}
+\begin{framed}
+\begin{minted}[linenos=true]{text}
+def main()
+{
+	var end = 100;
+	var iter = 1;
+
+	while iter <= end
+	{
+		if (iter % 3 == 0) and (iter % 5 == 0)
+		{
+			print "FizzBuzz ";
+		}
+		elif iter % 3 == 0
+		{
+			print "Fizz ";
+		}
+		elif iter % 5 == 0
+		{
+			print "Buzz ";
+		}
+		else
+		{
+			print iter ++ " ";
+		};
+		iter = iter + 1;
+	};
+	println "";
+}
+\end{minted}
+\end{framed}
+
+
+
+\end{document}

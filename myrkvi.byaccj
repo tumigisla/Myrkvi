@@ -50,6 +50,12 @@ function
 	;
 
 
+body
+	:	'{' decls exprs '}'
+	;
+
+
+
 optnames
 	:	/* nothing */	
 	|	dummynames	
@@ -180,8 +186,7 @@ ifexpr
 		elifexpr elseexpr			
 			{ emit("_endIf:"); }
 			{ elifCount = 0; }
-									
-									
+																	
 	;
 
 elifexpr
@@ -199,12 +204,6 @@ elseexpr
 	:	ELSE body 			
 	|	/* nothing */
 	;
-
-body
-	:	'{' decls exprs '}'
-	;
-
-
 
 
 

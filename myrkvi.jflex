@@ -52,7 +52,7 @@ PRINTLN = println
 DIGIT = [0-9]
 DOUBLE = {DIGIT}+\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 INT = {DIGIT}+
-OPCHAR = [\+\-*/<>%\^] | == | <= | >=
+OPCHAR = [\+\-*/<>%] | == | <= | >=
 NOTOP = not
 ANDOP = and
 OROP = or
