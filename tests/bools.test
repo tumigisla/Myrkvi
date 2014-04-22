@@ -1,0 +1,15 @@
+def main()
+{
+	var b,z,y;
+	b = false;
+	z = true;
+	y = false;
+
+	println "----";
+	println "BOOLS";
+	println "----";
+
+	println not(z or y) and b;
+
+	println "----";
+}

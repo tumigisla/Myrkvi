@@ -1,0 +1,23 @@
+def fibo(n)
+{
+	if(n < 2)
+	{
+		return 1;
+	}
+	else
+	{
+		return fibo(n-1) + fibo(n-2);
+	};
+}
+
+def main()
+{
+
+	println "----";
+	println "FIBO";
+	println "----";
+
+	println "fibo(30) = " ++ fibo(30);
+
+	println "----";
+}

@@ -1,0 +1,20 @@
+def main()
+{
+	var x = 5;
+	var y = 1;
+
+	println "----";
+	println "TEST";
+	println "----";
+	
+	while y <= x
+	{
+		print y ++ " ";
+		y = y + 1;
+	};
+	
+	println "";
+	println "Hello,world.";
+
+	println "----";
+}
