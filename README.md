@@ -6,7 +6,7 @@ Myrkvi programming language, made for the course "Compilers", University of Icel
 Instructor and mentor: Snorri Agnarsson.
 
 
-Test using makefile:
+Test using makefile (java,byaccj,JFlex.jar,morpho.jar required) :
 	
 	make
 	
